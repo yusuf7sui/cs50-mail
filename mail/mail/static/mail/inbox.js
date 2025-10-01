@@ -52,4 +52,35 @@ function load_mailbox(mailbox) {
 
   // Show the mailbox name
   document.querySelector('#emails-view').innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
+
+  fetch(`emails/${mailbox}`)
+  .then(response => response.json())
+  .then(emails => {
+    console.log(emails);
+
+    emails.forEach(email => {
+      const email_div = document.createElement('div');
+      email_div.className= `border rounded my-2 ${email.read ? 'bg-light' : 'bg-white'}`
+      email_div.style.cursor = 'pointer';
+
+      const display_line = mailbox === 'sent' ? `To ${email.recipients.join(',')}` : `From ${email.sender}`
+
+      email_div.innerHTML = `
+      <div class="d-flex justify-content-between">
+        <div class="flex-grow-1">${display_line}</div>
+        <div class="flex-grow-3 text-truncate mx-3">${email.subject}</div>
+        <div class="flex-grow-1 text-right">${email.timestamp}</div>
+      </div>
+      `;
+
+      email_div.addEventListener('click', () => load_email(email.id))
+      document.querySelector('#emails-view').append(email_div);
+    });
+  });
+}
+
+function load_email(mail_id){
+  //TODO:
+  //First make a get request to show mail data
+  //Afterwards via put request mark as read.
 }
