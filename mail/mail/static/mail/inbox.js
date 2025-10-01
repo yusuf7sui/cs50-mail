@@ -60,7 +60,7 @@ function load_mailbox(mailbox) {
 
     emails.forEach(email => {
       const email_div = document.createElement('div');
-      email_div.className= `border rounded my-2 ${email.read ? 'bg-light' : 'bg-white'}`
+      email_div.className = `border rounded my-2 ${email.read ? 'bg-white' : 'bg-light text-muted'}`
       email_div.style.cursor = 'pointer';
 
       const display_line = mailbox === 'sent' ? `To ${email.recipients.join(',')}` : `From ${email.sender}`
@@ -79,8 +79,33 @@ function load_mailbox(mailbox) {
   });
 }
 
-function load_email(mail_id){
-  //TODO:
-  //First make a get request to show mail data
-  //Afterwards via put request mark as read.
+function load_email(email_id){
+  fetch(`emails/${email_id}`)
+  .then(response => response.json())
+  .then(email => {
+      document.querySelector('#emails-view').innerHTML = `
+      <h3>${email.subject}</h3>
+      <div class="d-flex justify-content-between">
+        <div>
+           <div> <strong>From:</strong> ${email.sender}</div>
+           <div> <strong>To:</strong> ${email.recipients.join(', ')}</div>
+        </div>
+        <div>${email.timestamp}</div>
+      </div>
+      <p class="mt-3">${email.body}</p>
+      `;
+      mark_read(email_id);
+  })
+}
+
+function mark_read(email_id) {
+  fetch(`emails/${email_id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      read: true
+    })
+  })
 }
