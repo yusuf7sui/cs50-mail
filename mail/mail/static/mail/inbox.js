@@ -83,36 +83,63 @@ function load_email(email_id, mailbox){
   fetch(`emails/${email_id}`)
   .then(response => response.json())
   .then(email => {
-      document.querySelector('#emails-view').innerHTML = `
-      <h3>${email.subject}</h3>
-      <div class="d-flex justify-content-between">
-        <div>
-           <div> <strong>From:</strong> ${email.sender}</div>
-           <div> <strong>To:</strong> ${email.recipients.join(', ')}</div>
-        </div>
-        <div>${email.timestamp}</div>
+    const sender = email.sender;
+    const recipients = email.recipients;
+    const subject = email.subject;
+    const timestamp = email.timestamp;
+    const body = email.body;
+    const archived = email.archived;
+
+
+    document.querySelector('#emails-view').innerHTML = `
+    <h3>${subject}</h3>
+    <div class="d-flex justify-content-between">
+      <div>
+          <div> <strong>From:</strong> ${sender}</div>
+          <div> <strong>To:</strong> ${recipients.join(', ')}</div>
       </div>
-      <p class="mt-3">${email.body}</p>
-      `;
+      <div>${timestamp}</div>
+    </div>
+    <p class="mt-3">${body}</p>
+    `;
 
-      if (mailbox ==='inbox' || mailbox === 'archive') {
-        const archive_button = document.createElement('button');
-        archive_button.className ='btn btn-primary';
-        archive_button.innerText = email.archived ? 'Unarchive' : 'Archive';
+    if (mailbox ==='inbox' || mailbox === 'archive') {
+      const archive_button = document.createElement('button');
+      archive_button.className ='btn btn-primary mr-2';
+      archive_button.innerText = archived ? 'Unarchive' : 'Archive';
 
-        archive_button.addEventListener('click', () => {
-          fetch(`emails/${email_id}`, {
-            method: 'PUT',
-            body: JSON.stringify({
-              archived: !email.archived
-            })
+      archive_button.addEventListener('click', () => {
+        fetch(`emails/${email_id}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            archived: !archived
           })
-          .then(() => load_mailbox('inbox'))
-        })        
-        document.querySelector('#emails-view').appendChild(archive_button);
-      }
-      mark_read(email_id);
+        })
+        .then(() => load_mailbox('inbox'))
+      })        
+      document.querySelector('#emails-view').appendChild(archive_button);
+    }
+    const reply_button = document.createElement('button');
+    reply_button.className = 'btn btn-primary';
+    reply_button.innerHTML = 'Reply';
+    reply_button.addEventListener('click', () => {
+      compose_email();
+      reply_email(sender, subject, timestamp, body);
+    })
+    
+    document.querySelector('#emails-view').appendChild(reply_button);
+    mark_read(email_id);
   })
+}
+
+function reply_email(sender, original_subject, timestamp, original_body){
+  document.querySelector('#compose-recipients').value = sender;
+
+  const subject = original_subject.startsWith('Re:') ? original_subject: `Re: ${original_subject}`;
+  document.querySelector('#compose-subject').value = subject;
+
+  const body = `On ${timestamp} ${sender} wrote:\n${original_body} \n`;
+  document.querySelector('#compose-body').value = body;
 }
 
 function mark_read(email_id) {
