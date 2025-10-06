@@ -60,10 +60,10 @@ function load_mailbox(mailbox) {
 
     emails.forEach(email => {
       const email_div = document.createElement('div');
-      email_div.className = `border rounded my-2 ${email.read ? 'bg-white' : 'bg-light text-muted'}`
+      email_div.className = `border rounded my-2 ${email.read ? 'bg-white' : 'bg-light text-muted'}`;
       email_div.style.cursor = 'pointer';
 
-      const display_line = mailbox === 'sent' ? `To ${email.recipients.join(',')}` : `From ${email.sender}`
+      const display_line = mailbox === 'sent' ? `To ${email.recipients.join(',')}` : `From ${email.sender}`;
 
       email_div.innerHTML = `
       <div class="d-flex justify-content-between">
@@ -73,13 +73,13 @@ function load_mailbox(mailbox) {
       </div>
       `;
 
-      email_div.addEventListener('click', () => load_email(email.id))
+      email_div.addEventListener('click', () => load_email(email.id, mailbox));
       document.querySelector('#emails-view').append(email_div);
     });
   });
 }
 
-function load_email(email_id){
+function load_email(email_id, mailbox){
   fetch(`emails/${email_id}`)
   .then(response => response.json())
   .then(email => {
@@ -94,6 +94,23 @@ function load_email(email_id){
       </div>
       <p class="mt-3">${email.body}</p>
       `;
+
+      if (mailbox ==='inbox' || mailbox === 'archive') {
+        const archive_button = document.createElement('button');
+        archive_button.className ='btn btn-primary';
+        archive_button.innerText = email.archived ? 'Unarchive' : 'Archive';
+
+        archive_button.addEventListener('click', () => {
+          fetch(`emails/${email_id}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+              archived: !email.archived
+            })
+          })
+          .then(() => load_mailbox('inbox'))
+        })        
+        document.querySelector('#emails-view').appendChild(archive_button);
+      }
       mark_read(email_id);
   })
 }
@@ -101,9 +118,6 @@ function load_email(email_id){
 function mark_read(email_id) {
   fetch(`emails/${email_id}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json'
-    },
     body: JSON.stringify({
       read: true
     })
